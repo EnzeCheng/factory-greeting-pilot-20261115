@@ -1,7 +1,7 @@
 {
   "version": 1,
   "repository": "EnzeCheng/factory-greeting-pilot-20261115",
-  "targetBranch": "main",
+  "targetBranch": "acceptance-issue-45",
   "goals": [
     "Maintain the reproducible greeting example."
   ],
@@ -48,5 +48,9 @@
   "modelNetwork": "shared",
   "autoMerge": true,
   "evaluationPublication": true,
-  "priorityRubric": "Routine documentation edits have priority 0."
+  "priorityRubric": "Routine documentation edits have priority 0.",
+  "intakeAccounts": [
+    "EnzeCheng"
+  ],
+  "intakeLabel": "factory-issue-45"
 }
