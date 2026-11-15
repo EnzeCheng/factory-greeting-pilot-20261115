@@ -48,9 +48,9 @@
   "modelNetwork": "shared",
   "autoMerge": true,
   "evaluationPublication": true,
-  "priorityRubric": "Routine documentation edits have priority 0.",
+  "priorityRubric": "Give routine greeting documentation priority 1.",
   "intakeAccounts": [
     "EnzeCheng"
   ],
-  "intakeLabel": "factory-issue-45"
+  "intakeLabel": "factory-issue-45-after-push"
 }
