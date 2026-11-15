@@ -48,7 +48,7 @@
   "modelNetwork": "shared",
   "autoMerge": true,
   "evaluationPublication": true,
-  "priorityRubric": "Give routine greeting documentation priority 1.",
+  "priorityRubric": "Give routine greeting documentation priority 2.",
   "intakeAccounts": [
     "EnzeCheng"
   ],

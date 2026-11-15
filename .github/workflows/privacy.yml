@@ -16,7 +16,7 @@ jobs:
           import json, sys
           from pathlib import Path
 
-          allowed = {'.github/workflows/factory-guard.yml': ['6d68103133eb0bd8351bbf612b788e6ad55dfa51'], '.factory/policy.json': ['aedcc0ff69369a56195d6cc599727fb96d5b30b5'], '.factory/expected.txt': ['6a909f1354f26748034a48ce174abf3d86ce1027'], '.factory/check.py': ['aa7fa4196fdf0c69a0107772ca8981ca770f769d'], 'docs/example.txt': ['bc27c88e12a5f3d1351ea19303c35f373048bf31', '6a909f1354f26748034a48ce174abf3d86ce1027']}
+          allowed = {'.github/workflows/factory-guard.yml': ['6d68103133eb0bd8351bbf612b788e6ad55dfa51'], '.factory/policy.json': ['406c670b4d73869ca5dce0ca242baaa06826d8eb'], '.factory/expected.txt': ['6a909f1354f26748034a48ce174abf3d86ce1027'], '.factory/check.py': ['aa7fa4196fdf0c69a0107772ca8981ca770f769d'], 'docs/example.txt': ['bc27c88e12a5f3d1351ea19303c35f373048bf31', '6a909f1354f26748034a48ce174abf3d86ce1027']}
           tree = json.loads(Path(sys.argv[1]).read_text())
           assert tree["truncated"] is False
           entries = {e["path"]: e for e in tree["tree"] if e["type"] != "tree"}
