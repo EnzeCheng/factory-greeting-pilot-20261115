@@ -1,0 +1,52 @@
+{
+  "version": 1,
+  "repository": "EnzeCheng/factory-greeting-pilot-20261115",
+  "targetBranch": "main",
+  "goals": [
+    "Maintain the reproducible greeting example."
+  ],
+  "nonGoals": [],
+  "constraints": [
+    "Keep the example to a single line."
+  ],
+  "workCategories": [
+    "documentation"
+  ],
+  "allowedPaths": [
+    "docs/example.txt"
+  ],
+  "lowRiskPaths": [
+    "docs/example.txt"
+  ],
+  "highRiskPaths": [],
+  "protectedPaths": [
+    ".factory/",
+    ".github/workflows/"
+  ],
+  "checks": [
+    {
+      "id": "greeting",
+      "argv": [
+        "python3",
+        "-I",
+        "-B",
+        ".factory/check.py"
+      ],
+      "harness": ".factory/check.py",
+      "inputs": [
+        ".factory/expected.txt"
+      ],
+      "platform": "linux",
+      "timeoutMs": 30000
+    }
+  ],
+  "reviewPaths": {
+    "ux": [],
+    "ui": [],
+    "scientific": []
+  },
+  "modelNetwork": "shared",
+  "autoMerge": true,
+  "evaluationPublication": true,
+  "priorityRubric": "Routine documentation edits have priority 0."
+}

@@ -1,0 +1,29 @@
+name: Synthetic fixture check
+on: [push]
+permissions:
+  contents: read
+jobs:
+  privacy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify the complete synthetic tree
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh api "repos/$GITHUB_REPOSITORY/git/trees/$GITHUB_SHA?recursive=1" > "$RUNNER_TEMP/tree.json"
+          python3 -I - "$RUNNER_TEMP/tree.json" <<'PY'
+          import json, sys
+          from pathlib import Path
+
+          allowed = {'.github/workflows/factory-guard.yml': ['6d68103133eb0bd8351bbf612b788e6ad55dfa51'], '.factory/policy.json': ['e5e668d86d33f6178a484ebd29faa7413bc3b6c1'], '.factory/expected.txt': ['bc27c88e12a5f3d1351ea19303c35f373048bf31'], '.factory/check.py': ['aa7fa4196fdf0c69a0107772ca8981ca770f769d'], 'docs/example.txt': ['10ddd6d257e01349d514541981aeecea6b2e741d', 'bc27c88e12a5f3d1351ea19303c35f373048bf31']}
+          tree = json.loads(Path(sys.argv[1]).read_text())
+          assert tree["truncated"] is False
+          entries = {e["path"]: e for e in tree["tree"] if e["type"] != "tree"}
+          assert set(entries) == set(allowed) | {".github/workflows/privacy.yml"}
+          for path, entry in entries.items():
+              assert entry["type"] == "blob" and entry["mode"] == "100644"
+              if path in allowed:
+                  assert entry["sha"] in allowed[path], path
+          print("All fixture paths, modes and synthetic inputs are accounted for.")
+          PY

@@ -1,0 +1,83 @@
+name: Factory guarded integration
+run-name: Factory guarded integration ${{ inputs.integration }}
+on:
+  workflow_dispatch:
+    inputs:
+      operation:
+        type: string
+        required: true
+      pull:
+        type: string
+        required: true
+      source_branch:
+        type: string
+        required: true
+      expected_head:
+        type: string
+        required: true
+      expected_base:
+        type: string
+        required: true
+      integration:
+        type: string
+        required: true
+      integration_check:
+        type: string
+        required: true
+permissions:
+  contents: write
+  checks: read
+  pull-requests: read
+jobs:
+  integrate:
+    if: github.repository_id == '1458642807' && github.ref == 'refs/heads/main' && github.sha == inputs.expected_base
+    runs-on: ubuntu-latest
+    steps:
+      - name: Confirm the bound PR and check before updating both refs
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          OPERATION: ${{ inputs.operation }}
+          PULL: ${{ inputs.pull }}
+          SOURCE: ${{ inputs.source_branch }}
+          H: ${{ inputs.expected_head }}
+          B: ${{ inputs.expected_base }}
+          C: ${{ inputs.integration }}
+          CHECK: ${{ inputs.integration_check }}
+        run: |
+          set -euo pipefail
+          for oid in "$B" "$H" "$C"; do [[ "$oid" =~ ^[0-9a-f]{40}$ ]]; done
+          [[ "$OPERATION" =~ ^[0-9a-f]{64}$ && "$PULL" =~ ^[1-9][0-9]*$ && "$CHECK" =~ ^[1-9][0-9]*$ ]]
+          [[ "$SOURCE" =~ ^factory/[0-9a-f]{64}/source$ ]]
+          api="repos/$GITHUB_REPOSITORY"
+          gh api "$api/pulls/$PULL" | jq -e --arg b "$B" --arg h "$H" --arg source "$SOURCE" '
+            .state == "open" and .draft == false and .head.repo.id == 1458642807 and .base.repo.id == 1458642807
+            and .head.ref == $source and .head.sha == $h and .base.ref == "main" and .base.sha == $b'
+          # H is one commit directly on B, so the merge tree is exactly H's tree.
+          head_tree=$(gh api "$api/git/commits/$H" | jq -er --arg h "$H" --arg b "$B" '
+            select(.sha == $h and [.parents[].sha] == [$b]) | .tree.sha | select(test("^[0-9a-f]{40}$"))')
+          gh api "$api/git/commits/$C" | jq -e --arg c "$C" --arg b "$B" --arg h "$H" --arg tree "$head_tree" '
+            .sha == $c and [.parents[].sha] == [$b, $h] and .tree.sha == $tree'
+          # Compare complete Git tree entries, including adds, deletes and mode changes.
+          subtree() {
+            gh api "$api/git/trees/$1" | jq -er --arg entry "$2" '
+              select(.truncated == false) | .tree[] | select(.path == $entry and .type == "tree")
+              | .sha | select(test("^[0-9a-f]{40}$"))'
+          }
+          base_tree=$(gh api "$api/git/commits/$B" | jq -er --arg b "$B" 'select(.sha == $b) | .tree.sha')
+          base_github=$(subtree "$base_tree" .github)
+          head_github=$(subtree "$head_tree" .github)
+          base_workflows=$(subtree "$base_github" workflows)
+          head_workflows=$(subtree "$head_github" workflows)
+          [[ "$base_workflows" == "$head_workflows" ]]
+          gh api "$api/commits/$C/check-runs?check_name=privacy&filter=latest&per_page=100" |
+            jq -e --arg c "$C" --argjson check "$CHECK" '
+              .total_count == (.check_runs|length) and any(.check_runs[]; .id == $check)
+              and all(.check_runs[]; .name == "privacy" and .app.id == 15368 and .head_sha == $c
+                and .status == "completed" and .conclusion == "success")'
+          jq -n --arg op "$OPERATION" --arg s "refs/heads/$SOURCE" --arg h "$H" --arg b "$B" --arg c "$C" '{
+            query:"mutation($input:UpdateRefsInput!){updateRefs(input:$input){clientMutationId}}",
+            variables:{input:{repositoryId:"R_kgDOVvEfdw",clientMutationId:$op,refUpdates:[
+              {name:"refs/heads/main",beforeOid:$b,afterOid:$c,force:false},
+              {name:$s,beforeOid:$h,afterOid:$c,force:false}]}}}' |
+            gh api graphql --input -
